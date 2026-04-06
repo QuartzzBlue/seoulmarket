@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "STORAGE_JOB_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=<계정명>;AccountKey=<키>;EndpointSuffix=core.windows.net",
+
+    "MORNING_JOB_SCHEDULE": "0 0 9 * * 1-5",
+
+    "MARKET_SNAPSHOT_QUEUE_NAME": "market-snapshot-queue",
+
+    "REPORT_GENERATE_QUEUE_NAME": "report-generate-queue"
+  }
+}

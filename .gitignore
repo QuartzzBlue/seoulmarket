@@ -1,0 +1,22 @@
+# Azure Functions 로컬 설정 (민감 정보 포함)
+local.settings.json
+
+# 빌드 산출물
+dist/
+node_modules/
+
+# 로그
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# CLAUDE
+CLAUDE.md
+
+package-lock.json
