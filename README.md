@@ -174,38 +174,6 @@ npm run crawl
 
 ## 트러블슈팅
 
-### Azure Functions Flex Consumption에서 `FUNCTIONS_WORKER_RUNTIME` 설정 오류
-
-**문제**
-
-GitHub Actions 배포 파이프라인에서 아래와 같은 에러가 발생했습니다.
-
-```
-ERROR: The following app setting (Site.SiteConfig.AppSettings.FUNCTIONS_WORKER_RUNTIME)
-for Flex Consumption sites is invalid. Please remove or rename it before retrying.
-```
-
-**원인**
-
-`FUNCTIONS_WORKER_RUNTIME`, `FUNCTIONS_EXTENSION_VERSION` 등의 앱 설정은 기존 Consumption / Elastic Premium 플랜에서 런타임을 지정하는 방식입니다.  
-**Azure Functions Flex Consumption 플랜은 런타임을 앱 설정(App Settings)이 아닌 리소스 속성(`FunctionAppConfig`)으로 관리**하기 때문에, 이 값들을 App Settings에 넣으면 에러로 처리합니다.
-
-**해결**
-
-1. `az functionapp config appsettings set` 명령에서 두 설정을 **완전히 제거**했습니다.
-2. 이미 잘못 설정된 값은 아래 명령으로 삭제합니다.
-
-```bash
-az functionapp config appsettings delete \
-  --name "func-az01-dev-seoulmarket" \
-  --resource-group "<RESOURCE_GROUP>" \
-  --setting-names FUNCTIONS_WORKER_RUNTIME FUNCTIONS_EXTENSION_VERSION
-```
-
-3. Node 런타임과 버전은 Function App **생성 시점**에 `--runtime node --runtime-version 22` 옵션으로 지정합니다. Flex 플랜은 이후 중간 변경이 어렵기 때문에 생성 단계에서 올바르게 설정해야 합니다.
-
----
-
 ### GitHub Actions에서 빌드한 Playwright Chromium을 Azure Functions에서 사용 불가
 
 **문제**
