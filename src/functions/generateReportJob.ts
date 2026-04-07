@@ -11,7 +11,7 @@ import { logger } from "../utils/logger";
  * Queue Trigger 함수 - LLM 리포트 생성, Blob 저장, Teams 전송을 담당한다
  *
  * 실행 흐름:
- * 1. fetchMarketSnapshot이 크롤링/저장 완료 후 report-generate-queue에 메시지를 적재한다
+ * 1. GitHub Actions crawl.ts가 크롤링/저장 완료 후 report-generate-queue에 메시지를 적재한다
  * 2. 이 함수가 트리거되어 메시지를 수신한다
  * 3. normalized-data Blob에서 정제 데이터를 읽는다
  * 4. LLM에 리포트 생성을 요청한다

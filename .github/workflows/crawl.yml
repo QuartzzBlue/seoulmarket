@@ -1,0 +1,45 @@
+name: Daily Market Crawl
+
+on:
+  # 평일 08:00 KST = 전날 23:00 UTC (일~목)
+  # 평일 15:00 KST = 당일 06:00 UTC (월~금)
+  # 평일 19:00 KST = 당일 10:00 UTC (월~금)
+  schedule:
+    - cron: '0 23 * * 0-4'
+    - cron: '0 6 * * 1-5'
+    - cron: '0 10 * * 1-5'
+  # 수동 실행도 허용 (테스트용)
+  workflow_dispatch:
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Chromium
+        # GitHub runner는 Ubuntu이므로 --with-deps로 OS 패키지까지 설치 가능하다
+        # Function App과 달리 OS 환경이 고정되어 있어 신뢰할 수 있다
+        run: npx playwright install chromium --with-deps
+
+      - name: Run crawl
+        run: npm run crawl
+        env:
+          CRAWL_TARGET_URL: ${{ secrets.CRAWL_TARGET_URL }}
+          STORAGE_CONNECTION_STRING: ${{ secrets.STORAGE_CONNECTION_STRING }}
+          REPORT_GENERATE_QUEUE_NAME: ${{ secrets.REPORT_GENERATE_QUEUE_NAME }}
+          BLOB_CONTAINER_RAW_DATA: ${{ secrets.BLOB_CONTAINER_RAW_DATA }}
+          BLOB_CONTAINER_NORMALIZED_DATA: ${{ secrets.BLOB_CONTAINER_NORMALIZED_DATA }}

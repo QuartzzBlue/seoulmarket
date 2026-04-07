@@ -49,11 +49,6 @@ function createQueueServiceFromEnv(queueEnvKey: string): QueueService {
   return new QueueService(connectionString, queueName);
 }
 
-/** market-snapshot-queue에 적재하는 서비스 인스턴스를 반환한다 */
-export function createMarketSnapshotQueueService(): QueueService {
-  return createQueueServiceFromEnv("MARKET_SNAPSHOT_QUEUE_NAME");
-}
-
 /** report-generate-queue에 적재하는 서비스 인스턴스를 반환한다 */
 export function createReportGenerateQueueService(): QueueService {
   return createQueueServiceFromEnv("REPORT_GENERATE_QUEUE_NAME");

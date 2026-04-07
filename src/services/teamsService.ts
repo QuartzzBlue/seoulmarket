@@ -44,7 +44,8 @@ export async function sendReport(
   const kospi    = find("koreaIndex",   "코스피 종합");
   const kosdaq   = find("koreaIndex",   "코스닥 종합");
   const future   = snapshot.koreaSummary.find((c) => c.kind === "koreaFuture" && c.extra === "주간");
-  const fx       = snapshot.koreaSummary.find((c) => c.kind === "fx" && c.label.includes("원/달러"));
+  // "원달러 환율" / "원/달러 환율" 두 가지 형식 모두 대응하기 위해 kind만으로 찾는다
+  const fx       = snapshot.koreaSummary.find((c) => c.kind === "fx");
   const flow     = snapshot.flows[0];
 
   /** "▲ +37.53 / +0.69%" 형태로 포맷 */

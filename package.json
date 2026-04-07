@@ -8,7 +8,8 @@
     "watch": "tsc -w",
     "prestart": "npm run build",
     "start": "func start",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "crawl": "node dist/scripts/crawl.js"
   },
   "dependencies": {
     "@azure/functions": "^4.5.0",

@@ -33,16 +33,22 @@ jobs:
           npm ci
           npm run build --if-present
           npm run test --if-present
-          # Chromium 바이너리를 앱 폴더 내부(.playwright/)에 설치한다
-          # 배포 패키지(zip)에 함께 포함되어야 Azure 런타임에서 참조할 수 있다
-          # --with-deps는 시스템 패키지를 설치하므로 제외한다 (Azure OS와 보장 불일치)
-          PLAYWRIGHT_BROWSERS_PATH='./.playwright' npx playwright install chromium
           popd
 
       - name: Zip artifact for deployment
         shell: bash
         run: |
-          zip -r release.zip . -x "*.git*" -x "release.zip"
+          # node_modules는 포함(remote-build=false이므로 런타임이 직접 참조)
+          # .playwright는 제외: Azure 런타임에서 OS 의존성이 달라 로컬 빌드 바이너리를 쓸 수 없음
+          # 대신 앱 시작 시 PLAYWRIGHT_BROWSERS_PATH 경로에 chromium을 설치하는 방식 필요
+          zip -r release.zip . \
+            -x "*.git*" \
+            -x "release.zip" \
+            -x ".playwright/*" \
+            -x "src/*" \
+            -x "scripts/*" \
+            -x "*.ts" \
+            -x "tsconfig*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -78,8 +84,8 @@ jobs:
             --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
             --settings \
-              PLAYWRIGHT_BROWSERS_PATH=/home/site/wwwroot/.playwright \
-              WEBSITE_MOUNT_ENABLED=1
+              FUNCTIONS_WORKER_RUNTIME=node \
+              FUNCTIONS_EXTENSION_VERSION=~4
 
       - name: Run Azure Functions Action
         uses: Azure/functions-action@v1
