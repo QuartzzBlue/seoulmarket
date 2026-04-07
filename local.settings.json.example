@@ -2,12 +2,22 @@
   "IsEncrypted": false,
   "Values": {
     "FUNCTIONS_WORKER_RUNTIME": "node",
-    "STORAGE_JOB_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=<계정명>;AccountKey=<키>;EndpointSuffix=core.windows.net",
+    "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=<계정명>;AccountKey=<키>;EndpointSuffix=core.windows.net",
+    "STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=<계정명>;AccountKey=<키>;EndpointSuffix=core.windows.net",
 
-    "MORNING_JOB_SCHEDULE": "0 0 9 * * 1-5",
+    "WEBSITE_TIME_ZONE": "Korea Standard Time",
+    "MARKET_JOB_SCHEDULE": "0 0 8,15,19 * * *",
 
     "MARKET_SNAPSHOT_QUEUE_NAME": "market-snapshot-queue",
+    "REPORT_GENERATE_QUEUE_NAME": "report-generate-queue",
 
-    "REPORT_GENERATE_QUEUE_NAME": "report-generate-queue"
+    "LLM_API_KEY": "<OpenAI API 키>",
+    "LLM_MODEL": "gpt-4.1-mini",
+    "TEAMS_WEBHOOK_URL": "https://outlook.office.com/webhook/<채널-Incoming-Webhook-URL>",
+
+    "CRAWL_TARGET_URL": "https://<크롤링-대상-URL>",
+    "BLOB_CONTAINER_RAW_DATA": "raw-data",
+    "BLOB_CONTAINER_NORMALIZED_DATA": "normalized-data",
+    "BLOB_CONTAINER_REPORTS": "reports"
   }
 }

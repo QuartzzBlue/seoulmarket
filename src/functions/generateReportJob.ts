@@ -1,15 +1,22 @@
 import { app, InvocationContext } from "@azure/functions";
+import { MarketInsight } from "../models/insightSchema";
+import { NormalizedSnapshot } from "../models/normalizedData";
 import { GenerateReportMessage } from "../models/queueMessage";
+import { createNormalizedDataBlobService, createReportsBlobService } from "../services/blobService";
+import { generateReport } from "../services/llmService";
+import { sendReport } from "../services/teamsService";
 import { logger } from "../utils/logger";
 
 /**
- * Queue Trigger 함수 - LLM 리포트 생성 및 채널 발송을 담당한다
+ * Queue Trigger 함수 - LLM 리포트 생성, Blob 저장, Teams 전송을 담당한다
  *
  * 실행 흐름:
  * 1. fetchMarketSnapshot이 크롤링/저장 완료 후 report-generate-queue에 메시지를 적재한다
  * 2. 이 함수가 트리거되어 메시지를 수신한다
- * 3. (다음 단계) LLM을 통한 시장 리포트를 생성한다
- * 4. (다음 단계) 생성된 리포트를 채널(Slack / Teams / Kakao 등)로 발송한다
+ * 3. normalized-data Blob에서 정제 데이터를 읽는다
+ * 4. LLM에 리포트 생성을 요청한다
+ * 5. 생성된 리포트를 reports Blob에 저장한다
+ * 6. Teams 채널로 리포트를 전송한다
  */
 async function generateReportJobHandler(
   queueItem: unknown,
@@ -30,13 +37,30 @@ async function generateReportJobHandler(
       requestedAt: payload.requestedAt,
     });
 
-    // TODO: 다음 단계 - LLM을 통한 리포트 생성 구현 위치
-    logger.info(`[다음 단계] ${payload.marketDate} 시장 리포트 LLM 생성 예정`);
+    // normalized-data Blob에서 정제 데이터를 읽는다
+    // 경로: {marketDate}/{requestedAt}.json  (fetchMarketSnapshot이 저장한 경로와 동일)
+    const blobName = `${payload.marketDate}/${payload.requestedAt}.json`;
+    const normalizedBlobService = createNormalizedDataBlobService();
+    const rawJson = await normalizedBlobService.load(blobName);
+    const snapshot = JSON.parse(rawJson) as NormalizedSnapshot;
 
-    // TODO: 다음 단계 - 채널 발송 구현 위치 (Slack / Teams / Kakao 등)
-    logger.info(`[다음 단계] ${payload.marketDate} 리포트 채널 발송 예정`);
+    // LLM에 리포트 생성 요청 — 검증된 MarketInsight JSON 문자열을 반환한다
+    const reportJson = await generateReport(snapshot);
 
-    context.log("generateReportJob 완료");
+    // 생성된 리포트(JSON)를 reports Blob에 저장한다
+    // 경로: {marketDate}/{requestedAt}.json
+    const reportsBlobService = createReportsBlobService();
+    await reportsBlobService.save(
+      `${payload.marketDate}/${payload.requestedAt}.json`,
+      reportJson,
+      "application/json; charset=utf-8"
+    );
+
+    // Teams 채널로 리포트를 전송한다
+    const insight = JSON.parse(reportJson) as MarketInsight;
+    await sendReport(insight, snapshot);
+
+    context.log("generateReportJob 완료 - 리포트 저장 및 Teams 전송 완료");
   } catch (err) {
     logger.error("generateReportJob 실패", err);
     throw err;
@@ -46,6 +70,6 @@ async function generateReportJobHandler(
 // Queue 이름은 환경변수 REPORT_GENERATE_QUEUE_NAME에서 읽는다
 app.storageQueue("generateReportJob", {
   queueName: "%REPORT_GENERATE_QUEUE_NAME%",
-  connection: "STORAGE_JOB_CONNECTION_STRING",
+  connection: "STORAGE_CONNECTION_STRING",
   handler: generateReportJobHandler,
 });

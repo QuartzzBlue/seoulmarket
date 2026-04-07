@@ -36,11 +36,11 @@ export class QueueService {
  * 연결 문자열과 큐 이름 환경변수를 검증하고 QueueService를 반환하는 헬퍼
  */
 function createQueueServiceFromEnv(queueEnvKey: string): QueueService {
-  const connectionString = process.env.STORAGE_JOB_CONNECTION_STRING;
+  const connectionString = process.env.STORAGE_CONNECTION_STRING;
   const queueName = process.env[queueEnvKey];
 
   if (!connectionString) {
-    throw new Error("환경변수 STORAGE_JOB_CONNECTION_STRING 설정되지 않았습니다.");
+    throw new Error("환경변수 STORAGE_CONNECTION_STRING이 설정되지 않았습니다.");
   }
   if (!queueName) {
     throw new Error(`환경변수 ${queueEnvKey}가 설정되지 않았습니다.`);
