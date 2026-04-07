@@ -77,16 +77,6 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_68E23EE345B243CA9638E8A72DFC273D }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0068ABD53487467A8800AABB3A3FBBB6 }}
 
-      - name: Set Function App Settings
-        shell: bash
-        run: |
-          az functionapp config appsettings set \
-            --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --settings \
-              FUNCTIONS_WORKER_RUNTIME=node \
-              FUNCTIONS_EXTENSION_VERSION=~4
-
       - name: Run Azure Functions Action
         uses: Azure/functions-action@v1
         id: fa
