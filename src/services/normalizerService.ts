@@ -245,7 +245,10 @@ function parseMarketCard(
     const leftPart  = dateIdx >= 0 ? text.slice(0, dateIdx) : text;
     const rightPart = dateIdx >= 0 ? text.slice(dateIdx + date.length) : "";
 
-    const amountPat = "([\\d][\\d,억만]*)";
+    // [\\d,]* 로 숫자·쉼표를 매칭하고 [억만]으로 끝맺는다
+    // 이전 패턴 [\\d,억만]* 은 억·만을 중간 문자로 허용해 "4,069억4,141억"처럼
+    // 두 금액이 이어붙은 경우 전체를 하나의 금액으로 잘못 캡처했다
+    const amountPat = "([\\d][\\d,]*[억만])";
 
     /** 키워드 앞뒤에서 금액을 추출하고, 어느 쪽에서 찾았는지로 방향을 판별한다 */
     const extractEntry = (keyword: string): FlowEntry => {
