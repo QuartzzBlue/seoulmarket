@@ -148,15 +148,49 @@ function buildAdaptiveCardPayload(
     }));
 
   /**
-   * 키-값 목록 블록 (Adaptive Card FactSet)
-   * name은 굵은 라벨, value는 일반 텍스트로 렌더링된다
+   * 키-값 행 1개를 2열 ColumnSet으로 만든다
+   * FactSet은 특정 컨테이너 내부에서 name 열이 렌더링 안 되는 버그가 있어
+   * TextBlock 기반 ColumnSet으로 대체
    */
-  const factSet = (facts: { name: string; value: string }[]): object => ({
-    type: "FactSet",
-    facts,
+  const labelValueRow = (name: string, value: string): object => ({
+    type: "ColumnSet",
     spacing: "Small",
+    columns: [
+      {
+        type: "Column",
+        width: "auto",          // 라벨은 내용 폭만큼만
+        items: [
+          {
+            type: "TextBlock",
+            text: `**${name}**`,
+            wrap: false,
+            isSubtle: true,
+          },
+        ],
+      },
+      {
+        type: "Column",
+        width: "stretch",       // 값은 나머지 폭 전부
+        items: [
+          {
+            type: "TextBlock",
+            text: value,
+            wrap: true,
+            horizontalAlignment: "Right",
+          },
+        ],
+      },
+    ],
   });
 
+  /**
+   * labelValueRow 배열을 Container로 묶는다
+   */
+  const labelValueBlock = (facts: { name: string; value: string }[]): object => ({
+    type: "Container",
+    spacing: "Small",
+    items: facts.map((f) => labelValueRow(f.name, f.value)),
+  });
 
   // ==========================================================================
   // Adaptive Card body 구성
@@ -264,7 +298,7 @@ function buildAdaptiveCardPayload(
           type: "Column",
           width: "stretch",
           items: [
-            factSet([
+            labelValueBlock([
               { name: "코스피 종합",    value: fmtIndex(kospi) },
               { name: "코스피200 선물", value: fmtIndex(future) },
             ]),
@@ -274,7 +308,7 @@ function buildAdaptiveCardPayload(
           type: "Column",
           width: "stretch",
           items: [
-            factSet([
+            labelValueBlock([
               { name: "코스닥 종합",  value: fmtIndex(kosdaq) },
               { name: "원/달러 환율", value: fmtIndex(fx) },
             ]),
@@ -283,7 +317,7 @@ function buildAdaptiveCardPayload(
       ],
     },
     // 수급은 전체 폭 1행으로 표시한다
-    factSet([
+    labelValueBlock([
       { name: `수급 (${flow?.date ?? "-"})`, value: flowText },
     ]),
 
@@ -295,29 +329,18 @@ function buildAdaptiveCardPayload(
     sectionTitle("🌐 글로벌 지표"),
     ...bullets(insight.globalInsights),
 
-    // ── ⑤ 리스크 요인 | 참고 포인트 (2열 나란히) ────────────────
-    sectionTitle("⚠️ 리스크 요인  |  📌 참고 포인트"),
-    {
-      type: "ColumnSet",
-      columns: [
-        {
-          type: "Column",
-          width: "stretch",
-          items: bullets(insight.riskFactors),
-        },
-        {
-          type: "Column",
-          width: "stretch",
-          items: bullets(insight.actionNotes),
-        },
-      ],
-    },
+    // ── ⑤ 리스크 요인 ────────────────────────────────────────────
+    sectionTitle("⚠️ 리스크 요인"),
+    ...bullets(insight.riskFactors),
 
-    // ── ⑥ 핵심 재료 ─────────────────────────────────────────────
+    // ── ⑥ 리스크 요인 ────────────────────────────────────────────
+    sectionTitle("📌 참고 포인트"),
+    ...bullets(insight.actionNotes),
+    // ── ⑦ 핵심 재료 ─────────────────────────────────────────────
     sectionTitle("📰 핵심 재료"),
     ...bullets(insight.headlineDrivers),
 
-    // ── ⑦ 용어 해설 (기본 접힘) ──────────────────────────────────
+    // ── 용어 해설 (기본 접힘) ──────────────────────────────────
     // id: "glossaryBody" 를 Action.ToggleVisibility 로 제어한다
     {
       type: "TextBlock",
@@ -332,7 +355,7 @@ function buildAdaptiveCardPayload(
       id: "glossaryBody",
       isVisible: false,
       items: [
-        factSet([
+        labelValueBlock([
           { name: "코스피(KOSPI)",     value: "한국거래소 유가증권시장 전체 종목의 주가지수" },
           { name: "코스닥(KOSDAQ)",    value: "한국 중소·벤처 기업 중심의 주식시장 지수" },
           { name: "코스피200 선물",    value: "국내 대형주 200개 기반 파생상품. 장 시작 전 시장 방향 예측에 활용" },
