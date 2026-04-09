@@ -38,7 +38,7 @@ async function generateReportJobHandler(
     });
 
     // normalized-data Blob에서 정제 데이터를 읽는다
-    // 경로: {marketDate}/{requestedAt}.json  (fetchMarketSnapshot이 저장한 경로와 동일)
+    // 경로: {marketDate}/{requestedAt}.json  (crawl.ts가 저장한 경로와 동일)
     const blobName = `${payload.marketDate}/${payload.requestedAt}.json`;
     const normalizedBlobService = createNormalizedDataBlobService();
     const rawJson = await normalizedBlobService.load(blobName);

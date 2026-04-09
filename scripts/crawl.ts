@@ -32,10 +32,13 @@ async function main(): Promise<void> {
     throw new Error("환경변수 CRAWL_TARGET_URL이 설정되지 않았습니다.");
   }
 
-  // 타임스탬프는 전체 흐름에서 Blob 경로와 Queue 메시지를 연결하는 키로 사용된다
+  // marketDate는 KST 기준으로 계산한다
+  // GitHub Actions cron은 UTC 기준이므로 08:00 KST = 23:00 UTC(전날)에 실행된다
+  // UTC 기준 toISOString()을 그대로 쓰면 전날 날짜가 저장되어 조회 시 날짜가 엇갈린다
   const now = new Date();
-  const marketDate = now.toISOString().split("T")[0]; // YYYY-MM-DD
-  const requestedAt = now.toISOString();              // ISO 8601
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000); // UTC+9
+  const marketDate = kstNow.toISOString().split("T")[0]; // KST 기준 YYYY-MM-DD
+  const requestedAt = now.toISOString();                 // Blob 경로 고유 키 (UTC ISO 8601)
 
   logger.info("크롤링 시작", { marketDate, requestedAt, crawlUrl });
 

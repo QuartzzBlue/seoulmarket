@@ -37,7 +37,8 @@ async function pushLatestReportHandler(
       }
       marketDate = dateParam;
     } else {
-      marketDate = new Date().toISOString().split("T")[0];
+      // crawl.ts와 동일하게 KST 기준 날짜를 사용한다 (UTC+9)
+      marketDate = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split("T")[0];
     }
 
     logger.info("최신 리포트 조회 시작", { marketDate });

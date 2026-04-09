@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>서울마켓 브리핑</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="서울마켓" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
+  <style>
+    /* ── Design Tokens ──────────────────────────────────────────────────────── */
+    :root {
+      --bg:           #0f172a;
+      --bg-card:      #1e293b;
+      --bg-subtle:    #334155;
+      --border:       #334155;
+      --border-light: #475569;
+
+      --text-primary:   #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted:     #64748b;
+
+      --bullish: #10b981;
+      --neutral: #f59e0b;
+      --bearish: #ef4444;
+
+      --up:   #ef4444;   /* 한국 주식: 상승=빨강 */
+      --down: #3b82f6;   /* 한국 주식: 하락=파랑 */
+      --flat: #64748b;
+
+      --accent: #6366f1;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+
+      --font-base: 17px;
+    }
+
+    /* ── Reset & Base ───────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      font-size: var(--font-base);
+      line-height: 1.65;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100dvh;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────────────────────── */
+    .page-wrapper {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 0 80px;
+    }
+
+    /* ── Top Bar ────────────────────────────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .topbar-logo span { font-size: 22px; }
+    .topbar-date {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ── Section ────────────────────────────────────────────────────────────── */
+    /* 재사용 가능한 섹션 컴포넌트 — 새 섹션 추가 시 이 클래스 사용 */
+    .section {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    /* ── Hero Banner ────────────────────────────────────────────────────────── */
+    .hero {
+      padding: 28px 20px 24px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      /* 배경 그라디언트 — 시장 톤에 따라 JS에서 색상 변경 */
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.08;
+      background: radial-gradient(ellipse at top left, var(--tone-color, #6366f1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-tone {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 12px;
+      background: color-mix(in srgb, var(--tone-color, #6366f1) 15%, transparent);
+      color: var(--tone-color, #6366f1);
+      border: 1px solid color-mix(in srgb, var(--tone-color, #6366f1) 30%, transparent);
+    }
+    .hero-title {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+    .hero-summary {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .confidence-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--bg-subtle);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .confidence-bar-fill {
+      height: 100%;
+      background: var(--tone-color, #6366f1);
+      border-radius: 100px;
+      transition: width 0.8s ease;
+    }
+    .confidence-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* ── Index Grid ─────────────────────────────────────────────────────────── */
+    .index-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .index-cell {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+    .index-cell-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .index-cell-value {
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .index-cell-change {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .up   { color: var(--up); }
+    .down { color: var(--down); }
+    .flat { color: var(--flat); }
+
+    /* ── Flow Bar ───────────────────────────────────────────────────────────── */
+    .flow-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      margin-top: 10px;
+    }
+    .flow-bar-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .flow-actors {
+      display: flex;
+      gap: 8px;
+    }
+    .flow-actor {
+      flex: 1;
+      text-align: center;
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 4px;
+    }
+    .flow-actor-name   { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+    .flow-actor-amount { font-size: 16px; font-weight: 700; }
+    .flow-actor-dir    { font-size: 12px; font-weight: 600; margin-top: 2px; }
+    .flow-actor-dir.buy  { color: var(--up); }
+    .flow-actor-dir.sell { color: var(--down); }
+
+    /* ── Insight List ───────────────────────────────────────────────────────── */
+    /* 재사용 가능한 인사이트 리스트 — 어떤 섹션에서든 사용 가능 */
+    .insight-list { list-style: none; }
+    .insight-list li {
+      display: flex;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+    .insight-list li:last-child { border-bottom: none; padding-bottom: 0; }
+    .insight-list li::before {
+      content: "•";
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── Tag chips — 확장용 컴포넌트 ───────────────────────────────────────── */
+    .chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      font-size: 14px;
+      padding: 5px 12px;
+      border-radius: 100px;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Loading / Error ────────────────────────────────────────────────────── */
+    .state-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px;
+      gap: 16px;
+      color: var(--text-muted);
+      font-size: 16px;
+      text-align: center;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--bg-subtle);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-view {
+      margin: 24px 20px;
+      background: color-mix(in srgb, var(--bearish) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--bearish) 30%, transparent);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+    }
+    .error-view p { color: var(--text-secondary); font-size: 16px; line-height: 1.6; }
+    .error-view .error-icon { font-size: 36px; margin-bottom: 10px; }
+
+    /* ── Bottom Nav placeholder — 탭 추가 확장용 ──────────────────────────── */
+    /* 나중에 탭 네비게이션을 추가할 때 여기에 구현 */
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <span>📊</span>서울마켓
+    </div>
+    <div class="topbar-date" id="topbar-date">불러오는 중…</div>
+  </header>
+
+  <!-- Content -->
+  <div id="app">
+    <div class="state-view">
+      <div class="spinner"></div>
+      <span>브리핑을 불러오는 중입니다</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ==========================================================================
+  // 설정
+  // ==========================================================================
+
+  // Function App API 엔드포인트 — 배포 후 실제 Function App 주소로 변경한다
+  const API_URL = "https://func-az01-dev-seoulmarket.azurewebsites.net/api/getLatestReport";
+
+  // ==========================================================================
+  // 상수
+  // ==========================================================================
+
+  // 시장 톤별 표시 정보 — 새 톤 추가 시 이 객체에만 항목을 추가하면 된다
+  const TONE = {
+    bullish: { label: "강세",  color: "#10b981", emoji: "🟢" },
+    neutral: { label: "중립",  color: "#f59e0b", emoji: "🟡" },
+    bearish: { label: "약세",  color: "#ef4444", emoji: "🔴" },
+  };
+
+  // ==========================================================================
+  // 보안 유틸
+  // ==========================================================================
+
+  /**
+   * HTML 특수문자를 이스케이프하여 XSS를 방지한다
+   * API 응답값을 innerHTML에 삽입하기 전에 반드시 이 함수를 거쳐야 한다
+   */
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // ==========================================================================
+  // DOM 헬퍼
+  // ==========================================================================
+
+  /**
+   * 엘리먼트를 생성하고 클래스명·innerHTML을 설정하는 헬퍼
+   * 반복적인 createElement 코드를 줄이기 위해 사용한다
+   * 주의: html 파라미터에는 반드시 esc()를 거친 값만 전달한다
+   */
+  function el(tag, className, html) {
+    const e = document.createElement(tag);
+    if (className) e.className = className;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  /**
+   * ISO 8601 문자열을 KST 기준 "4월 9일 08:05" 형식으로 변환한다
+   * Intl.DateTimeFormat API를 사용하므로 별도 라이브러리가 필요 없다
+   */
+  function fmtKST(iso) {
+    return new Date(iso).toLocaleString("ko-KR", {
+      timeZone: "Asia/Seoul",
+      month: "long", day: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+  }
+
+  /**
+   * ParsedCardBase 객체에서 화면 표시용 값·변동률·방향을 추출한다
+   * card가 null/undefined이면 null을 반환하여 호출부에서 "-"로 처리한다
+   */
+  function fmtIndex(card) {
+    if (!card) return null;
+    // 한국 주식: 상승=빨강(▲), 하락=파랑(▼) 관례를 따른다
+    const arrow = card.direction === "up" ? "▲" : card.direction === "down" ? "▼" : "–";
+    return {
+      value:  card.value,
+      change: `${arrow} ${card.changePct ?? ""}`.trim(),
+      dir:    card.direction ?? "flat",
+    };
+  }
+
+  /**
+   * koreaSummary 배열에서 특정 kind + label 키워드에 해당하는 카드를 찾는다
+   * label이 없으면 kind만으로 검색한다
+   */
+  function findCard(list, kind, label) {
+    return list.find(c => c.kind === kind && (!label || c.label.includes(label)));
+  }
+
+  /**
+   * 섹션 래퍼를 생성한다 — 제목(section-title) + 콘텐츠 엘리먼트로 구성된다
+   * 새 섹션 추가 시 이 함수를 재사용하면 일관된 레이아웃을 유지할 수 있다
+   */
+  function makeSection(titleText, contentEl) {
+    const sec = el("div", "section");
+    // 섹션 제목은 텍스트로만 설정하여 XSS를 원천 차단한다
+    const title = el("div", "section-title");
+    title.textContent = titleText;
+    sec.appendChild(title);
+    sec.appendChild(contentEl);
+    return sec;
+  }
+
+  /**
+   * 문자열 배열을 불릿 리스트(<ul>)로 변환한다
+   * textContent를 사용하므로 XSS 위험이 없다
+   */
+  function makeInsightList(items) {
+    const ul = el("ul", "insight-list");
+    items.forEach(text => {
+      const li = document.createElement("li");
+      li.textContent = text; // textContent: HTML 이스케이프 자동 처리
+      ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  /**
+   * 문자열 배열을 chip 뱃지 목록으로 변환한다
+   * prefix는 esc() 없이도 안전한 리터럴 이모지만 사용한다
+   */
+  function makeChipList(items, prefix) {
+    const wrap = el("div", "chip-list");
+    items.forEach(text => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = `${prefix} ${text}`; // textContent: XSS 안전
+      wrap.appendChild(chip);
+    });
+    return wrap;
+  }
+
+  // ==========================================================================
+  // 렌더링
+  // ==========================================================================
+
+  /**
+   * API 응답({ insight, snapshot })을 받아 전체 화면을 렌더링한다
+   * 섹션 순서: Hero → 지수 → 한국 인사이트 → 글로벌 → 핵심 재료 → 리스크 → 참고
+   */
+  function render({ insight, snapshot }) {
+    const app  = document.getElementById("app");
+    const tone = TONE[insight.marketTone] ?? TONE.neutral;
+
+    // 이전 콘텐츠를 비운다
+    app.innerHTML = "";
+
+    // 상단 바 날짜 업데이트
+    document.getElementById("topbar-date").textContent = fmtKST(snapshot.collectedAt) + " KST";
+
+    // ── ① Hero 배너 ─────────────────────────────────────────────────────────
+    // CSS 변수 --tone-color를 JS에서 주입하여 시장 톤에 따라 배경 그라디언트 색상이 바뀐다
+    const hero = el("div", "hero");
+    hero.style.setProperty("--tone-color", tone.color);
+    // innerHTML에 삽입하는 API 값은 모두 esc()로 이스케이프한다
+    hero.innerHTML = `
+      <div class="hero-tone">${esc(tone.emoji)} ${esc(tone.label)}</div>
+      <div class="hero-title">${esc(insight.summaryTitle)}</div>
+      <div class="hero-summary">${esc(insight.oneLineSummary)}</div>
+      <div class="hero-meta">
+        <div class="confidence-bar">
+          <div class="confidence-bar-fill" style="width:${esc(String(insight.confidence))}%"></div>
+        </div>
+        <div class="confidence-label">신뢰도 ${esc(String(insight.confidence))}/100</div>
+      </div>
+    `;
+    app.appendChild(hero);
+
+    // ── ② 한국 시장 지수 ────────────────────────────────────────────────────
+    // koreaSummary 배열에서 각 지표를 kind/label 기준으로 찾는다
+    const kospi  = findCard(snapshot.koreaSummary, "koreaIndex",  "코스피 종합");
+    const kosdaq = findCard(snapshot.koreaSummary, "koreaIndex",  "코스닥 종합");
+    // 코스피200 선물은 "주간" extra 태그가 있는 항목만 표시한다 (마감 제외)
+    const future = snapshot.koreaSummary.find(c => c.kind === "koreaFuture" && c.extra === "주간");
+    // 원/달러 환율은 "원달러" / "원/달러" 두 형식 모두 대응하기 위해 kind만으로 찾는다
+    const fx     = snapshot.koreaSummary.find(c => c.kind === "fx");
+    // 수급은 첫 번째 항목만 사용한다 (복수 항목이 있으면 가장 최근 것)
+    const flow   = snapshot.flows[0];
+
+    const indexGrid = el("div", "index-grid");
+    [
+      { label: "코스피",         data: fmtIndex(kospi)  },
+      { label: "코스닥",         data: fmtIndex(kosdaq) },
+      { label: "코스피200 선물", data: fmtIndex(future) },
+      { label: "원/달러 환율",   data: fmtIndex(fx)     },
+    ].forEach(({ label, data }) => {
+      const cell = el("div", "index-cell");
+      if (data) {
+        // 값이 있을 때: 현재가 + 변동률 + 방향 색상 표시
+        cell.innerHTML = `
+          <div class="index-cell-label">${esc(label)}</div>
+          <div class="index-cell-value">${esc(data.value)}</div>
+          <div class="index-cell-change ${esc(data.dir)}">${esc(data.change)}</div>
+        `;
+      } else {
+        // 데이터가 없을 때: "-" 표시
+        cell.innerHTML = `
+          <div class="index-cell-label">${esc(label)}</div>
+          <div class="index-cell-value" style="color:var(--flat)">-</div>
+        `;
+      }
+      indexGrid.appendChild(cell);
+    });
+
+    // 수급 바: 지수 그리드 아래에 배치한다
+    const indexWrap = el("div");
+    indexWrap.appendChild(indexGrid);
+    if (flow) {
+      const flowBar = el("div", "flow-bar");
+      flowBar.innerHTML = `<div class="flow-bar-label">수급 (${esc(flow.date)})</div>`;
+      const actors = el("div", "flow-actors");
+      [
+        { name: "개인",   entry: flow.individual  },
+        { name: "외국인", entry: flow.foreign      },
+        { name: "기관",   entry: flow.institution  },
+      ].forEach(({ name, entry }) => {
+        // 매수(buy)=빨강, 매도(sell)=파랑 — 한국 주식 관례
+        const actor = document.createElement("div");
+        actor.className = "flow-actor";
+        actor.innerHTML = `
+          <div class="flow-actor-name">${esc(name)}</div>
+          <div class="flow-actor-amount">${esc(entry.amount)}</div>
+          <div class="flow-actor-dir ${esc(entry.direction)}">${entry.direction === "buy" ? "매수" : "매도"}</div>
+        `;
+        actors.appendChild(actor);
+      });
+      flowBar.appendChild(actors);
+      indexWrap.appendChild(flowBar);
+    }
+    app.appendChild(makeSection("📊 한국 시장 지수", indexWrap));
+
+    // ── ③ 한국 시장 인사이트 (LLM 생성) ────────────────────────────────────
+    app.appendChild(makeSection("🇰🇷 한국 시장 인사이트", makeInsightList(insight.koreaInsights)));
+
+    // ── ④ 글로벌 지표 (LLM 생성) ────────────────────────────────────────────
+    app.appendChild(makeSection("🌐 글로벌 지표", makeInsightList(insight.globalInsights)));
+
+    // ── ⑤ 핵심 재료 (LLM 생성) ─────────────────────────────────────────────
+    app.appendChild(makeSection("📰 핵심 재료", makeInsightList(insight.headlineDrivers)));
+
+    // ── ⑥ 리스크 요인 & 참고 포인트 (chip 형식) ─────────────────────────────
+    // 짧은 문장이므로 chip 뱃지로 표시하여 시각적으로 구분한다
+    app.appendChild(makeSection("⚠️ 리스크 요인",  makeChipList(insight.riskFactors, "⚠️")));
+    app.appendChild(makeSection("📌 참고 포인트", makeChipList(insight.actionNotes,  "📌")));
+  }
+
+  // ==========================================================================
+  // 오류 표시
+  // ==========================================================================
+
+  /** 오류 메시지를 화면 중앙에 표시한다 */
+  function showError(msg) {
+    const app = document.getElementById("app");
+    const view = el("div", "error-view");
+    view.innerHTML = `<div class="error-icon">😥</div>`;
+    const p = document.createElement("p");
+    p.textContent = msg; // textContent: XSS 안전
+    view.appendChild(p);
+    app.innerHTML = "";
+    app.appendChild(view);
+    document.getElementById("topbar-date").textContent = "오류 발생";
+  }
+
+  // ==========================================================================
+  // 데이터 로드
+  // ==========================================================================
+
+  /**
+   * Function API에서 최신 리포트를 가져와 렌더링한다
+   * 네트워크 오류 또는 API 오류 발생 시 오류 화면을 표시한다
+   */
+  async function load() {
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) {
+        // API가 JSON 오류 메시지를 반환하면 그대로 표시한다
+        const body = await res.json().catch(() => ({}));
+        showError(body.error ?? `오류가 발생했습니다 (${res.status})`);
+        return;
+      }
+      render(await res.json());
+    } catch {
+      // fetch 자체 실패 (네트워크 단절 등)
+      showError("네트워크 오류가 발생했습니다.\n잠시 후 다시 시도해 주세요.");
+    }
+  }
+
+  // ==========================================================================
+  // 초기화
+  // ==========================================================================
+
+  // 서비스 워커 등록 — PWA "홈 화면에 추가" 기능 활성화에 필요하다
+  // HTTPS 환경에서만 등록되며, 미지원 브라우저는 조용히 무시된다
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+  }
+
+  // 페이지 로드 즉시 데이터를 가져온다
+  load();
+</script>
+</body>
+</html>
