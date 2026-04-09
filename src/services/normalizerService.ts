@@ -245,10 +245,12 @@ function parseMarketCard(
     const leftPart  = dateIdx >= 0 ? text.slice(0, dateIdx) : text;
     const rightPart = dateIdx >= 0 ? text.slice(dateIdx + date.length) : "";
 
-    // [\\d,]* 로 숫자·쉼표를 매칭하고 [억만]으로 끝맺는다
+    // 금액 패턴: "1조 1209억" / "2조3,456억" / "1,234억" / "567만" 모두 커버한다
+    // - (?:[\\d][\\d,]*조\\s*)? : "1조 " 같은 조 단위 앞부분 (선택)
+    // - [\\d][\\d,]*[억만]       : 억 또는 만으로 끝나는 숫자 (필수)
     // 이전 패턴 [\\d,억만]* 은 억·만을 중간 문자로 허용해 "4,069억4,141억"처럼
     // 두 금액이 이어붙은 경우 전체를 하나의 금액으로 잘못 캡처했다
-    const amountPat = "([\\d][\\d,]*[억만])";
+    const amountPat = "((?:[\\d][\\d,]*조\\s*)?[\\d][\\d,]*[억만])";
 
     /** 키워드 앞뒤에서 금액을 추출하고, 어느 쪽에서 찾았는지로 방향을 판별한다 */
     const extractEntry = (keyword: string): FlowEntry => {
