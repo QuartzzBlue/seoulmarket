@@ -17,12 +17,12 @@
     "@azure/storage-queue": "^12.21.0",
     "cheerio": "^1.2.0",
     "openai": "^6.33.0",
-    "playwright": "^1.51.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "azure-functions-core-tools": "^4.0.6610",
+    "playwright": "^1.51.0",
     "rimraf": "^5.0.0",
     "typescript": "^5.4.0"
   },
