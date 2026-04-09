@@ -24,6 +24,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Generate PNG icons from SVG
+        run: |
+          # PWA 설치 프롬프트에는 PNG 아이콘이 필수다 (SVG만으로는 Chrome이 설치 버튼을 표시하지 않는다)
+          # librsvg2-bin: Ubuntu 러너에 기본 포함된 SVG → PNG 변환 도구
+          sudo apt-get install -y librsvg2-bin
+          rsvg-convert -w 192 -h 192 web/icon.svg -o web/icon-192.png
+          rsvg-convert -w 512 -h 512 web/icon.svg -o web/icon-512.png
+
       - name: Configure Pages
         uses: actions/configure-pages@v4
 
